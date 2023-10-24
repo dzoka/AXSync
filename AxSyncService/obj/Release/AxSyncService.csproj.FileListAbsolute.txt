@@ -1,0 +1,9 @@
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AxSyncService\bin\Release\AxSyncService.exe
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AxSyncService\bin\Release\AxSyncService.pdb
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AxSyncService\bin\Release\AxSyncLibrary.dll
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AxSyncService\bin\Release\AxSyncLibrary.pdb
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AxSyncService\obj\Release\ResolveAssemblyReference.cache
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AxSyncService\obj\Release\Dzoka.AxSyncService.ProjectInstaller.resources
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AxSyncService\obj\Release\AxSyncService.csproj.GenerateResource.Cache
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AxSyncService\obj\Release\AxSyncService.exe
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AxSyncService\obj\Release\AxSyncService.pdb

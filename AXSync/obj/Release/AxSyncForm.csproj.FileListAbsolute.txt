@@ -1,0 +1,10 @@
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AXSync\bin\Release\AxSyncForm.exe
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AXSync\bin\Release\AxSyncForm.pdb
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AXSync\bin\Release\AxSyncLibrary.dll
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AXSync\bin\Release\AxSyncLibrary.pdb
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AXSync\obj\Release\ResolveAssemblyReference.cache
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AXSync\obj\Release\Dzoka.AxSyncForm.Form1.resources
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AXSync\obj\Release\Dzoka.AxSyncForm.Properties.Resources.resources
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AXSync\obj\Release\AxSyncForm.csproj.GenerateResource.Cache
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AXSync\obj\Release\AxSyncForm.exe
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AXSync\obj\Release\AxSyncForm.pdb

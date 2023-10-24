@@ -1,0 +1,5 @@
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AxSyncLibrary\bin\Release\SyncLibrary.dll
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AxSyncLibrary\bin\Release\SyncLibrary.pdb
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AxSyncLibrary\obj\Release\ResolveAssemblyReference.cache
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AxSyncLibrary\obj\Release\SyncLibrary.dll
+C:\Users\$barens\Documents\Visual Studio 2008\Projects\AXSync\AxSyncLibrary\obj\Release\SyncLibrary.pdb

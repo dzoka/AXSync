@@ -217,6 +217,11 @@
             "AssemblyAsmDisplayName" = "8:AxSyncLibrary, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
+                    "_7D491647263DB0923B626552FD5CA2E2"
+                    {
+                    "Name" = "8:AxSyncLibrary.dll"
+                    "Attributes" = "3:512"
+                    }
                 }
             "SourcePath" = "8:AxSyncLibrary.dll"
             "TargetName" = "8:"
@@ -292,14 +297,14 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:AXSync"
-        "ProductCode" = "8:{342522C1-08D1-4DCA-86F1-F511E4DA35B3}"
-        "PackageCode" = "8:{143AFA99-EB85-4003-AF9A-C2955A5EDD8E}"
+        "ProductCode" = "8:{13CF609C-5BAE-4A9C-9804-3800DA13DFF5}"
+        "PackageCode" = "8:{610A32B8-3B21-4EA0-8331-B2D47D4212C6}"
         "UpgradeCode" = "8:{5B23D8B2-A2AF-4961-B9FE-5799314D764B}"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:TRUE"
-        "ProductVersion" = "8:1.1.0"
+        "ProductVersion" = "8:1.1.1"
         "Manufacturer" = "8:Dzoka"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"

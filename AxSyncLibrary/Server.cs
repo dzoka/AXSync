@@ -244,6 +244,7 @@ namespace Dzoka.AxSyncLibrary
                             do
                             {
                                 sqlCommand1.CommandText = "INSERT INTO AxSync (message) VALUES (@message)";
+                                sqlCommand1.Parameters.Clear();
                                 sqlCommand1.Parameters.AddWithValue("@message", messageQueue.ElementAt(0));
                                 if (sqlConnection1.State == ConnectionState.Closed)
                                 {

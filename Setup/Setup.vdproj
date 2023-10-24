@@ -217,11 +217,6 @@
             "AssemblyAsmDisplayName" = "8:AxSyncLibrary, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
-                    "_7D491647263DB0923B626552FD5CA2E2"
-                    {
-                    "Name" = "8:AxSyncLibrary.dll"
-                    "Attributes" = "3:512"
-                    }
                 }
             "SourcePath" = "8:AxSyncLibrary.dll"
             "TargetName" = "8:"
@@ -297,14 +292,14 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:AXSync"
-        "ProductCode" = "8:{512BF67B-E0DE-4659-8A9C-3C787116F94A}"
-        "PackageCode" = "8:{0BACB56D-B1DB-46DD-A793-62E45B61108F}"
+        "ProductCode" = "8:{342522C1-08D1-4DCA-86F1-F511E4DA35B3}"
+        "PackageCode" = "8:{143AFA99-EB85-4003-AF9A-C2955A5EDD8E}"
         "UpgradeCode" = "8:{5B23D8B2-A2AF-4961-B9FE-5799314D764B}"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:TRUE"
-        "ProductVersion" = "8:1.0.0"
+        "ProductVersion" = "8:1.1.0"
         "Manufacturer" = "8:Dzoka"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
@@ -818,7 +813,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_C87732C227214E14A71DB375F6F9142E"
             {
-            "SourcePath" = "8:..\\AxSyncService\\obj\\Debug\\AxSyncService.exe"
+            "SourcePath" = "8:..\\AxSyncService\\obj\\Release\\AxSyncService.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_845C1E63CFB34AA7B8F9E02D1D516157"
@@ -846,7 +841,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_EBF5F41157F94C4F850989F42F28499F"
             {
-            "SourcePath" = "8:..\\AxSyncLibrary\\obj\\Debug\\AxSyncLibrary.dll"
+            "SourcePath" = "8:..\\AxSyncLibrary\\obj\\Release\\AxSyncLibrary.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_845C1E63CFB34AA7B8F9E02D1D516157"

@@ -14,6 +14,12 @@ using System.Diagnostics;
 
 namespace Dzoka.AxSyncLibrary
 {
+    enum ErrorCode : ushort
+    {
+        SqlConnectionOpen = 81,
+        SqlExecute = 82
+    }
+
     public class Server
     {
         private static int numThreads = 3;                          // count of pipe threads to launch
@@ -185,16 +191,10 @@ namespace Dzoka.AxSyncLibrary
         /// </summary>
         private void waitConnection()
         {
-            //var id = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
-            //var rule = new PipeAccessRule(id, PipeAccessRights.ReadWrite, System.Security.AccessControl.AccessControlType.Allow);
             var rule = new PipeAccessRule("Everyone", PipeAccessRights.FullControl, System.Security.AccessControl.AccessControlType.Allow);
             PipeSecurity pipeSecurity = new PipeSecurity();
             pipeSecurity.SetAccessRule(rule);
-
             NamedPipeServerStream pipeServer = new NamedPipeServerStream("DzokaAxSync", PipeDirection.InOut, numThreads, PipeTransmissionMode.Message, PipeOptions.None, 4096, 4096, pipeSecurity);
-
-            //NamedPipeServerStream pipeServer = new NamedPipeServerStream("AxSync", PipeDirection.In, numThreads);
-
             int threadId = Thread.CurrentThread.ManagedThreadId;
             pipeServer.WaitForConnection();
             string inp = "";
@@ -243,7 +243,8 @@ namespace Dzoka.AxSyncLibrary
 
                             do
                             {
-                                sqlCommand1.CommandText = String.Format("INSERT INTO AxSync (message) VALUES ('{0}')", messageQueue.ElementAt(0));
+                                sqlCommand1.CommandText = "INSERT INTO AxSync (message) VALUES (@message)";
+                                sqlCommand1.Parameters.AddWithValue("@message", messageQueue.ElementAt(0));
                                 if (sqlConnection1.State == ConnectionState.Closed)
                                 {
                                     try
@@ -253,7 +254,7 @@ namespace Dzoka.AxSyncLibrary
                                     catch (Exception e)
                                     {
                                         errorMessage.AppendLine(e.Message);
-                                        LogMessage(errorMessage.ToString(), EventLogEntryType.Information, 1);
+                                        LogMessage(errorMessage.ToString(), EventLogEntryType.Error, (int)ErrorCode.SqlConnectionOpen);
                                         return;
                                     }
                                 }
@@ -264,8 +265,9 @@ namespace Dzoka.AxSyncLibrary
                                 catch (Exception e)
                                 {
                                     errorMessage.AppendLine(e.Message);
-                                    LogMessage(errorMessage.ToString(), EventLogEntryType.Information, 1);
-                                    return;
+                                    errorMessage.AppendLine(messageQueue.Dequeue());        // save problematic message into application log
+                                    LogMessage(errorMessage.ToString(), EventLogEntryType.Error, (int)ErrorCode.SqlExecute);
+                                    break;                                                  // continue the thread
                                 }
                                 if (sqlResult > 0)
                                 {

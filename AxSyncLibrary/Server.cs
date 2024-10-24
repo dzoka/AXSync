@@ -1,4 +1,5 @@
-﻿using System;
+﻿// (c) 2023, 2024 Dzoka
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,10 +15,19 @@ using System.Diagnostics;
 
 namespace Dzoka.AxSyncLibrary
 {
-    enum ErrorCode : ushort
+    enum ErrorCodes : ushort
     {
         SqlConnectionOpen = 81,
-        SqlExecute = 82
+        SqlExecute = 82,
+        Starting = 83,
+        Threading = 84
+    }
+
+    enum WarningCodes : ushort
+    {
+        WindowsRegistry = 41,
+        Stopping = 42,
+        QueueLength = 43
     }
 
     public class Server
@@ -31,7 +41,6 @@ namespace Dzoka.AxSyncLibrary
         private Thread forward;                                     // forwarding thread
         private bool runForward = false;                            // do we forwarding queue
         private int forwardSleepTime = 100;                         // sleep time (ms) for forwarding
-        private StringBuilder errorMessage;                         // error messages
         const string registryRoot = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Dzoka\\AxSync";
         private string connectionString = "";                       // connection string to database
         public event EventHandler CheckQueue;                       // used to test/debug in Form1
@@ -42,40 +51,60 @@ namespace Dzoka.AxSyncLibrary
         /// </summary>
         public Server()
         {
+            #region open Windows Application event log
+
+            try
+            {
+                eventLog1 = new EventLog("Application", ".", "AXSync");
+            }
+            catch
+            {
+                eventLog1 = null;       // continue without evemt log
+            }
+
+            #endregion
+
+            #region read settings from registry
+
             int tempInt;
-            eventLog1 = new EventLog("Application")
+            try
             {
-                Source = "AXSync"
-            };
-            connectionString = (string)Registry.GetValue(registryRoot, "ConnectionString", "");
-            if (int.TryParse((string)Registry.GetValue(registryRoot, "MonitorSleepTime", "100"), out tempInt))
-            {
-                monitorSleepTime = tempInt;
+                connectionString = (string)Registry.GetValue(registryRoot, "ConnectionString", "");
+                if (int.TryParse((string)Registry.GetValue(registryRoot, "MonitorSleepTime", "100"), out tempInt))
+                {
+                    monitorSleepTime = tempInt;
+                }
+                else
+                {
+                    monitorSleepTime = 100;
+                }
+                if (int.TryParse((string)Registry.GetValue(registryRoot, "ForwardSleepTime", "100"), out tempInt))
+                {
+                    forwardSleepTime = tempInt;
+                }
+                else
+                {
+                    forwardSleepTime = 100;
+                }
+                if (int.TryParse((string)Registry.GetValue(registryRoot, "NumThreads", "3"), out tempInt))
+                {
+                    numThreads = tempInt;
+                }
+                else
+                {
+                    numThreads = 3;
+                }
             }
-            else
+            catch (Exception e)
             {
-                monitorSleepTime = 100;
+                LogMessage(String.Format("Read Windows registry exception {0}", e.Message), EventLogEntryType.Warning, (int)WarningCodes.WindowsRegistry);
             }
-            if (int.TryParse((string)Registry.GetValue(registryRoot, "ForwardSleepTime", "100"), out tempInt))
-            {
-                forwardSleepTime = tempInt;
-            }
-            else
-            {
-                forwardSleepTime = 100;
-            }
-            if (int.TryParse((string)Registry.GetValue(registryRoot, "NumThreads", "3"), out tempInt))
-            {
-                numThreads = tempInt;
-            }
-            else
-            {
-                numThreads = 3;
-            }
+
+            #endregion
         }
 
         /// <summary>
-        /// Log messages to Windows Application log
+        /// Log messages to Windows Application event log
         /// </summary>
         /// <param name="message"></param>
         private void LogMessage(string message, EventLogEntryType type, int id)
@@ -95,13 +124,13 @@ namespace Dzoka.AxSyncLibrary
 
         /// <summary>
         /// Read last message from queue. Does not enqueue.
+        /// Used in Form1 for testing.
         /// </summary>
         /// <returns></returns>
         public string ReadQueue()
         {
             if (messageQueue.Count > 0)
             {
-                //return messageQueue.Dequeue();
                 return messageQueue.ElementAt(messageQueue.Count - 1);
             }
             else
@@ -111,32 +140,45 @@ namespace Dzoka.AxSyncLibrary
         }
 
         /// <summary>
-        /// Starts all pipes and monitoring threads
+        /// Starts working threads
         /// </summary>
-        public void StartServer()
+        public bool StartServer()
         {
             if (string.IsNullOrEmpty(connectionString))
             {
-                LogMessage("AXSync server could not start. Missing Connection string", EventLogEntryType.Error, 1);
-                return;                             // do not start threads
+                LogMessage("AXSync server could not start. Missing Connection string", EventLogEntryType.Error, (int)ErrorCodes.Starting);
+                return false;                   // do not start threads
             }
-            for (int i = 0; i < numThreads; i++)
+            monitor = new Thread(monitorThreads)
             {
-                servers[i] = new Thread(waitConnection);
-                servers[i].Name = "Pipe listener";
-                servers[i].Start();
-            }
-            monitor = new Thread(monitorThreads);
-            monitor.Name = "Pipe monitor";
+                Name = "Pipe monitor",
+            };
             runMonitor = true;
-            monitor.Start();
-
-            forward = new Thread(forwardQueue);
-            forward.Name = "Queue forwarder";
+            try
+            {
+                monitor.Start();
+            }
+            catch (Exception e)
+            {
+                LogMessage(String.Format("Monitor thread could not start, exception: {0}", e.Message), EventLogEntryType.Error, (int)ErrorCodes.Starting);
+                return false;
+            }
+            forward = new Thread(forwardQueue)
+            {
+                Name = "Queue forwarder",
+            };
             runForward = true;
-            forward.Start();
-
-            LogMessage("AxSync server started", EventLogEntryType.Information, 0);
+            try
+            {
+                forward.Start();
+            }
+            catch (Exception e)
+            {
+                LogMessage(String.Format("Forwarder thread could not start, exception: {0}", e.Message), EventLogEntryType.Error, (int)ErrorCodes.Starting);
+                // TODO should we kill monitor thread before we return?
+                return false;
+            }
+            return (monitor.IsAlive && forward.IsAlive);
         }
 
         /// <summary>
@@ -144,26 +186,38 @@ namespace Dzoka.AxSyncLibrary
         /// </summary>
         public void StopServer()
         {
-            runForward = false;
-            if (forward != null)
-            {
-                forward.Join(forwardSleepTime * 2);
-                forward.Abort();
-            }
-
             runMonitor = false;
-            if (monitor != null)
+            try
             {
-                monitor.Join(monitorSleepTime * 2);                 // wait twice sleep time until thread ends
-                monitor.Abort();
+                if (monitor != null)
+                {
+                    monitor.Join(monitorSleepTime * 2);         // wait twice sleep time until thread ends
+                    monitor.Abort();
+                }
             }
-
+            catch (Exception e)
+            {
+                LogMessage(String.Format("Monitor thread stop exception: {0}", e.Message), EventLogEntryType.Warning, (int)WarningCodes.Stopping);
+            }
+            runForward = false;
+            try
+            {
+                if (forward != null)
+                {
+                    forward.Join(forwardSleepTime * 2);
+                    forward.Abort();
+                }
+            }
+            catch (Exception e)
+            {
+                LogMessage(String.Format("Forwarder thread stop exception: {0}", e.Message), EventLogEntryType.Warning, (int)WarningCodes.Stopping);
+            }
             bool closing = true;
             while (closing)
             {
                 closing = Client.Submit("Closing");                 // close waiting connections
             }
-            LogMessage(String.Format("AxSync server stopped. Queue length = {0}", messageQueue.Count), EventLogEntryType.Information, 0);
+            LogMessage(String.Format("AxSync server stopped. Queue length = {0}", messageQueue.Count), EventLogEntryType.Warning, (int)WarningCodes.QueueLength);
         }
 
         /// <summary>
@@ -171,19 +225,45 @@ namespace Dzoka.AxSyncLibrary
         /// </summary>
         private void monitorThreads()
         {
+            #region initialize listening pipes
+
+            for (int i = 0; i < numThreads; i++)
+            {
+                servers[i] = new Thread(waitConnection)
+                {
+                    Name = "Pipe listener"
+                };
+                servers[i].Start();
+            }
+
+            #endregion
+
+            #region monitor running pipes
+
             while (runMonitor)
             {
                 for (int i = 0; i < numThreads; i++)
                 {
                     if (servers[i].IsAlive == false)
                     {
-                        servers[i] = new Thread(waitConnection);
-                        servers[i].Name = "Pipe server";
-                        servers[i].Start();
+                        try
+                        {
+                            servers[i] = new Thread(waitConnection)
+                            {
+                                Name = "Pipe listener"
+                            };
+                            servers[i].Start();
+                        }
+                        catch (Exception e)
+                        {
+                            LogMessage(String.Format("Pipe listener thread could not be started, exception: {0}", e.Message), EventLogEntryType.Error, (int)ErrorCodes.Starting);
+                        }
                     }
                 }
                 Thread.Sleep(monitorSleepTime);
             }
+
+            #endregion
         }
 
         /// <summary>
@@ -202,18 +282,20 @@ namespace Dzoka.AxSyncLibrary
             {
                 StreamString ss = new StreamString(pipeServer);
                 inp = ss.ReadString();
+                if (runMonitor)
+                {
+                    // only if monitor is running, we queue the message, otherwise - we are closing threads, do not save this message into queue
+                    messageQueue.Enqueue(inp);
+                }
             }
-            catch (IOException e)
+            catch (Exception e)
             {
-                inp = String.Format("Pipe server, IO exception: {0}", e.Message);
-                LogMessage(inp, EventLogEntryType.Information, 1);
+                LogMessage(String.Format("Pipe server, exception: {0}", e.Message), EventLogEntryType.Error, (int)ErrorCodes.Threading);
             }
-            // if monitor is not running - we are closing waiting connections, do not save this into queue
-            if (runMonitor)
+            finally
             {
-                messageQueue.Enqueue(inp);
+                pipeServer.Close();
             }
-            pipeServer.Close();
         }
 
         /// <summary>
@@ -221,6 +303,7 @@ namespace Dzoka.AxSyncLibrary
         /// </summary>
         private void forwardQueue()
         {
+            StringBuilder errorMessage;
             int sqlResult;
             while (runForward)
             {
@@ -229,7 +312,7 @@ namespace Dzoka.AxSyncLibrary
                     errorMessage = new StringBuilder();
                     if (CheckQueue != null)
                     {
-                        CheckQueue(this, new EventArgs());              // rise event, that queue is waiting
+                        CheckQueue(this, new EventArgs());              // rise event, the queue is waiting
                     }
 
                     using (SqlConnection sqlConnection1 = new SqlConnection(connectionString))
@@ -238,15 +321,15 @@ namespace Dzoka.AxSyncLibrary
                         {
                             sqlCommand1.Connection = sqlConnection1;
                             sqlCommand1.CommandType = CommandType.Text;
+                            sqlCommand1.CommandText = "INSERT INTO AXSync (message) VALUES (@message)";
 
                             #region store the queue
 
                             do
                             {
-                                sqlCommand1.CommandText = "INSERT INTO AxSync (message) VALUES (@message)";
                                 sqlCommand1.Parameters.Clear();
                                 sqlCommand1.Parameters.AddWithValue("@message", messageQueue.ElementAt(0));
-                                if (sqlConnection1.State == ConnectionState.Closed)
+                                if (sqlConnection1.State != ConnectionState.Open)
                                 {
                                     try
                                     {
@@ -254,21 +337,30 @@ namespace Dzoka.AxSyncLibrary
                                     }
                                     catch (Exception e)
                                     {
-                                        errorMessage.AppendLine(e.Message);
-                                        LogMessage(errorMessage.ToString(), EventLogEntryType.Error, (int)ErrorCode.SqlConnectionOpen);
-                                        return;
+                                        LogMessage(String.Format("Store the queue, connection open exception {0}", e.Message), EventLogEntryType.Error, (int)ErrorCodes.SqlConnectionOpen);
+                                        break;                  // continue the thread
                                     }
                                 }
                                 try
                                 {
-                                    sqlResult = sqlCommand1.ExecuteNonQuery();
+                                    if (sqlConnection1.State == ConnectionState.Open)
+                                    {
+                                        sqlResult = sqlCommand1.ExecuteNonQuery();
+                                    }
+                                    else
+                                    {
+                                        sqlResult = 0;
+                                        LogMessage(String.Format("Store the queue, connection could not be opened, connection state: {0}", 
+                                            sqlConnection1.State.ToString()), EventLogEntryType.Error, (int)ErrorCodes.SqlConnectionOpen);
+                                    }
                                 }
                                 catch (Exception e)
                                 {
+                                    errorMessage.AppendLine("Store the queue, execute command exception.");
+                                    errorMessage.AppendLine(messageQueue.Dequeue());        // de-queue problemic message into application log
                                     errorMessage.AppendLine(e.Message);
-                                    errorMessage.AppendLine(messageQueue.Dequeue());        // save problematic message into application log
-                                    LogMessage(errorMessage.ToString(), EventLogEntryType.Error, (int)ErrorCode.SqlExecute);
-                                    break;                                                  // continue the thread
+                                    LogMessage(errorMessage.ToString(), EventLogEntryType.Error, (int)ErrorCodes.SqlExecute);
+                                    break;                      // continue the thread
                                 }
                                 if (sqlResult > 0)
                                 {
